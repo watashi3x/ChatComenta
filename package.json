@@ -1,0 +1,8 @@
+{
+  "name": "nos-tres",
+  "version": "2.0.0",
+  "description": "Feed estilo Facebook — backend seguro via Netlify Functions",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0"
+  }
+}
