@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nós 3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f0f2f5;
+      --surface:   #ffffff;
+      --border:    #e4e6eb;
+      --ink:       #050505;
+      --muted:     #65676b;
+      --accent:    #1877f2;
+      --accent-h:  #166fe5;
+      --radius:    12px;
+      --shadow:    0 1px 2px rgba(0,0,0,.10), 0 0 0 1px rgba(0,0,0,.04);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+      font-size: 15px;
+      min-height: 100vh;
+    }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; height: 56px;
+    }
+
+    .nav-logo { font-weight: 700; font-size: 1.3rem; color: var(--accent); letter-spacing: -0.5px; }
+    .nav-logo span { color: var(--ink); }
+
+    main {
+      max-width: 600px; margin: 0 auto;
+      padding: 20px 12px 80px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+
+    /* CREATE CARD */
+    .create-card {
+      background: var(--surface); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 12px 16px 16px;
+    }
+
+    .create-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+
+    .avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; color: white; font-weight: 700; flex-shrink: 0;
+    }
+
+    .create-placeholder {
+      flex: 1; background: var(--bg); border: none; border-radius: 999px;
+      padding: 10px 16px; font-family: inherit; font-size: 0.95rem;
+      color: var(--muted); cursor: pointer; text-align: left; transition: background .15s;
+    }
+    .create-placeholder:hover { background: #e4e6eb; }
+
+    #createForm { display: none; flex-direction: column; gap: 12px; }
+    #createForm.open { display: flex; }
+
+    #captionInput {
+      width: 100%; border: none; outline: none; font-family: inherit;
+      font-size: 1.05rem; color: var(--ink); resize: none;
+      min-height: 60px; background: transparent;
+    }
+    #captionInput::placeholder { color: var(--muted); }
+
+    .drop-zone {
+      border: 2px dashed var(--border); border-radius: 10px;
+      padding: 28px; text-align: center; cursor: pointer;
+      transition: border-color .15s, background .15s; position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: #e7f0fd; }
+    .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .drop-zone-icon { font-size: 2rem; margin-bottom: 6px; }
+    .drop-zone p { color: var(--muted); font-size: .88rem; }
+    .drop-zone p strong { color: var(--accent); }
+
+    #imagePreview { display: none; position: relative; border-radius: 10px; overflow: hidden; }
+    #imagePreview img { width: 100%; max-height: 400px; object-fit: cover; display: block; }
+    .remove-img {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(0,0,0,.6); color: white; border: none;
+      border-radius: 50%; width: 28px; height: 28px; cursor: pointer;
+      font-size: .9rem; display: flex; align-items: center; justify-content: center;
+    }
+
+    #uploadProgress { display: none; height: 3px; background: var(--bg); border-radius: 999px; overflow: hidden; margin: 0; }
+    #uploadProgress.active { display: block; }
+    #uploadBar { height: 100%; background: var(--accent); width: 0%; transition: width .3s; }
+
+    .form-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+    .btn {
+      border: none; border-radius: 8px; padding: 9px 18px;
+      font-family: inherit; font-size: .88rem; font-weight: 600;
+      cursor: pointer; transition: background .15s, opacity .15s;
+    }
+    .btn-ghost { background: var(--bg); color: var(--ink); }
+    .btn-ghost:hover { background: #e4e6eb; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-h); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* POST CARD */
+    .post-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+
+    .post-header { display: flex; align-items: center; gap: 10px; padding: 14px 16px 10px; }
+    .post-meta { flex: 1; }
+    .post-author { font-weight: 700; font-size: .95rem; }
+    .post-date   { font-size: .78rem; color: var(--muted); margin-top: 1px; }
+    .post-caption { padding: 0 16px 12px; line-height: 1.55; font-size: .95rem; }
+    .post-image { width: 100%; max-height: 520px; object-fit: cover; display: block; background: var(--bg); }
+
+    /* REACTIONS BAR */
+    .reactions-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 16px; border-bottom: 1px solid var(--border);
+    }
+    .reactions-summary { display: flex; align-items: center; gap: 4px; font-size: .85rem; color: var(--muted); }
+    .comments-count { font-size: .85rem; color: var(--muted); cursor: pointer; }
+    .comments-count:hover { text-decoration: underline; }
+
+    /* ACTION BAR */
+    .action-bar { display: flex; border-bottom: 1px solid var(--border); }
+    .action-btn {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      gap: 6px; padding: 6px 0; background: none; border: none; cursor: pointer;
+      font-family: inherit; font-size: .88rem; font-weight: 600; color: var(--muted);
+      border-radius: 8px; margin: 4px; transition: background .15s, color .15s;
+    }
+    .action-btn:hover { background: var(--bg); color: var(--ink); }
+    .action-btn.liked { color: var(--accent); }
+    .action-btn.liked:hover { background: #e7f0fd; }
+    .action-icon { font-size: 1.1rem; }
+
+    .emoji-picker-wrap { position: relative; flex: 1; }
+    .emoji-picker {
+      display: none; position: absolute; bottom: calc(100% + 8px); left: 50%;
+      transform: translateX(-50%); background: var(--surface); border-radius: 999px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.18); padding: 8px 12px;
+      gap: 4px; z-index: 50; white-space: nowrap;
+    }
+    .emoji-picker.open { display: flex; }
+    .emoji-opt {
+      font-size: 1.4rem; cursor: pointer; padding: 4px 6px;
+      border-radius: 50%; border: none; background: none;
+      transition: transform .15s; line-height: 1;
+    }
+    .emoji-opt:hover { transform: scale(1.35); }
+
+    /* COMMENTS */
+    .comments-section { padding: 8px 16px 12px; }
+    .comment-item { display: flex; gap: 8px; margin-bottom: 10px; }
+    .comment-bubble { background: var(--bg); border-radius: 18px; padding: 8px 12px; flex: 1; }
+    .comment-bubble .author { font-weight: 700; font-size: .85rem; }
+    .comment-bubble .text   { font-size: .9rem; line-height: 1.45; margin-top: 2px; }
+    .comment-time { font-size: .72rem; color: var(--muted); margin-top: 4px; padding-left: 4px; }
+
+    .comment-input-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+    .comment-input {
+      flex: 1; background: var(--bg); border: none; border-radius: 999px;
+      padding: 9px 16px; font-family: inherit; font-size: .9rem; outline: none; color: var(--ink);
+    }
+    .comment-input::placeholder { color: var(--muted); }
+    .send-btn {
+      background: none; border: none; cursor: pointer; font-size: 1.2rem;
+      padding: 6px; color: var(--accent); opacity: .4; transition: opacity .15s;
+    }
+    .send-btn.active { opacity: 1; }
+
+    /* EMPTY / SKELETON */
+    .feed-empty { text-align: center; padding: 48px 20px; color: var(--muted); font-size: .95rem; }
+    .feed-empty .icon { font-size: 3rem; margin-bottom: 12px; }
+    .skeleton-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; }
+    .skel {
+      background: linear-gradient(90deg,#f0f2f5 25%,#e8eaed 50%,#f0f2f5 75%);
+      background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px;
+    }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+
+    /* TOAST */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: #333; color: white; padding: 10px 20px;
+      border-radius: 999px; font-size: .85rem; font-weight: 500;
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s, transform .2s; z-index: 200; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── NAME MODAL ── */
+    #nameModal {
+      display: none; position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,.45); align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    #nameModal.open { display: flex; }
+    .modal-box {
+      background: var(--surface); border-radius: 16px;
+      padding: 28px 24px; width: 100%; max-width: 360px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.22);
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .modal-box h2 { font-size: 1.15rem; font-weight: 700; }
+    .modal-box p  { font-size: .88rem; color: var(--muted); margin-top: -8px; }
+    .modal-input {
+      width: 100%; padding: 11px 14px; border: 1.5px solid var(--border);
+      border-radius: 9px; font-family: inherit; font-size: .95rem;
+      color: var(--ink); outline: none; transition: border-color .15s;
+    }
+    .modal-input:focus { border-color: var(--accent); }
+    .modal-btn {
+      background: var(--accent); color: white; border: none;
+      border-radius: 9px; padding: 11px; font-family: inherit;
+      font-size: .92rem; font-weight: 600; cursor: pointer;
+      transition: background .15s;
+    }
+    .modal-btn:hover { background: var(--accent-h); }
+    .modal-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── CHAT SIDEBAR ── */
+    #chatSidebar {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 340px; max-width: 100vw;
+      background: var(--surface);
+      box-shadow: -4px 0 24px rgba(0,0,0,.12);
+      display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform .28s cubic-bezier(.4,0,.2,1);
+      z-index: 250;
+    }
+    #chatSidebar.open { transform: translateX(0); }
+
+    #chatOverlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.3); z-index: 249;
+    }
+    #chatOverlay.open { display: block; }
+
+    .chat-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .chat-header .avatar { width: 36px; height: 36px; font-size: .9rem; flex-shrink: 0; }
+    .chat-with { flex: 1; }
+    .chat-with-name { font-weight: 700; font-size: .95rem; }
+    .chat-with-sub  { font-size: .75rem; color: var(--muted); }
+    .chat-close {
+      background: none; border: none; font-size: 1.3rem;
+      cursor: pointer; color: var(--muted); padding: 4px;
+      line-height: 1; border-radius: 50%;
+      transition: background .15s;
+    }
+    .chat-close:hover { background: var(--bg); }
+
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 16px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .chat-bubble-wrap {
+      display: flex; flex-direction: column;
+    }
+    .chat-bubble-wrap.mine  { align-items: flex-end; }
+    .chat-bubble-wrap.theirs { align-items: flex-start; }
+
+    .chat-bubble {
+      max-width: 80%; padding: 9px 13px;
+      border-radius: 18px; font-size: .9rem; line-height: 1.45;
+      word-break: break-word;
+    }
+    .mine   .chat-bubble { background: var(--accent); color: white; border-bottom-right-radius: 4px; }
+    .theirs .chat-bubble { background: var(--bg); color: var(--ink); border-bottom-left-radius: 4px; }
+
+    .bubble-sender { font-size: .72rem; color: var(--muted); margin-bottom: 3px; padding: 0 4px; }
+    .bubble-time   { font-size: .68rem; color: var(--muted); margin-top: 3px; padding: 0 4px; }
+
+    .chat-empty {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 8px; color: var(--muted);
+      font-size: .88rem; text-align: center;
+    }
+    .chat-empty .icon { font-size: 2.2rem; }
+
+    .chat-input-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 14px; border-top: 1px solid var(--border);
+    }
+    .chat-input {
+      flex: 1; background: var(--bg); border: none; border-radius: 999px;
+      padding: 10px 16px; font-family: inherit; font-size: .9rem;
+      outline: none; color: var(--ink);
+    }
+    .chat-input::placeholder { color: var(--muted); }
+    .chat-send-btn {
+      background: var(--accent); color: white; border: none;
+      border-radius: 50%; width: 36px; height: 36px;
+      font-size: 1rem; cursor: pointer; display: flex;
+      align-items: center; justify-content: center;
+      opacity: .4; transition: opacity .15s;
+      flex-shrink: 0;
+    }
+    .chat-send-btn.active { opacity: 1; }
+
+    /* Chat toggle button (fixo no canto) */
+    #chatToggleBtn {
+      position: fixed; bottom: 24px; right: 20px;
+      background: var(--accent); color: white;
+      border: none; border-radius: 999px;
+      padding: 12px 20px; font-family: inherit;
+      font-size: .88rem; font-weight: 700;
+      cursor: pointer; box-shadow: 0 4px 16px rgba(24,119,242,.4);
+      display: flex; align-items: center; gap: 8px;
+      transition: background .15s, transform .15s;
+      z-index: 100;
+    }
+    #chatToggleBtn:hover { background: var(--accent-h); transform: scale(1.04); }
+    #chatToggleBtn .badge {
+      background: #e41e3f; color: white; border-radius: 999px;
+      font-size: .7rem; font-weight: 700; padding: 1px 6px;
+      min-width: 18px; text-align: center; display: none;
+    }
+    #chatToggleBtn .badge.show { display: inline-block; }
+
+    /* Nome clicável no comentário */
+    .author-link {
+      cursor: pointer; font-weight: 700; font-size: .85rem;
+    }
+    .author-link:hover { text-decoration: underline; color: var(--accent); }
+
+    @media (max-width: 480px) {
+      #chatSidebar { width: 100vw; }
+    }
+
+    /* ── USER CODE BADGE ── */
+    .user-code {
+      font-size: .72rem; color: var(--muted);
+      font-weight: 600; letter-spacing: .02em;
+    }
+    .author-link {
+      cursor: pointer; font-weight: 700; font-size: .85rem;
+    }
+    .author-link:hover { text-decoration: underline; color: var(--accent); }
+
+    /* ── CHAT NEW CONVERSATION ── */
+    .chat-new-conv {
+      padding: 12px 14px; border-bottom: 1px solid var(--border);
+    }
+    .chat-new-conv input {
+      width: 100%; padding: 9px 13px; border: 1.5px solid var(--border);
+      border-radius: 9px; font-family: inherit; font-size: .88rem;
+      outline: none; color: var(--ink); transition: border-color .15s;
+    }
+    .chat-new-conv input:focus { border-color: var(--accent); }
+    .chat-new-conv p {
+      font-size: .75rem; color: var(--muted); margin-top: 6px; padding: 0 2px;
+    }
+    .conv-item {
+      display:flex; align-items:center; gap:12px; padding:12px;
+      border-radius:10px; cursor:pointer; transition:background .15s;
+    }
+    .conv-item:hover { background: var(--bg); }
+    .conv-unread {
+      background:#e41e3f; color:white; border-radius:999px;
+      font-size:.7rem; font-weight:700; padding:2px 7px; flex-shrink:0;
+    }
+
+    /* My code display in nav */
+    .my-code-tag {
+      font-size: .7rem; font-weight: 700; color: var(--accent);
+      background: #e7f0fd; border-radius: 999px; padding: 2px 8px;
+      letter-spacing: .03em; cursor: pointer; white-space: nowrap;
+    }
+    .my-code-tag:hover { background: #d0e4fc; }
+  </style>
+</head>
+<body>
+
+<!-- CHAT TOGGLE BUTTON -->
+<button id="chatToggleBtn">
+  💬 Chat
+  <span class="badge" id="chatBadge">0</span>
+</button>
+
+<!-- CHAT OVERLAY -->
+<div id="chatOverlay"></div>
+
+<!-- CHAT SIDEBAR -->
+<div id="chatSidebar">
+  <div class="chat-header">
+    <div class="avatar" id="chatPeerAvatar">?</div>
+    <div class="chat-with">
+      <div class="chat-with-name" id="chatPeerName">Selecione alguém</div>
+      <div class="chat-with-sub">Conversa privada</div>
+    </div>
+    <button class="chat-close" id="chatCloseBtn">✕</button>
+  </div>
+  <div class="chat-new-conv" id="chatNewConv" style="display:none">
+    <input type="text" id="chatCodeInput" placeholder="Digite o código de alguém ex: 4721" maxlength="4" inputmode="numeric">
+    <p>Digite o código de 4 dígitos para iniciar uma conversa</p>
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-empty">
+      <div class="icon">💬</div>
+      <p>Clique no nome de alguém<br>num comentário para conversar</p>
+    </div>
+  </div>
+  <div class="chat-input-row">
+    <input class="chat-input" id="chatInput" placeholder="Mensagem…" maxlength="500" disabled>
+    <button class="chat-send-btn" id="chatSendBtn">➤</button>
+  </div>
+</div>
+
+<nav>
+  <div class="nav-logo">nós<span>3</span></div>
+  <span class="my-code-tag" id="myCodeTag" title="Clique para copiar seu código" style="display:none"></span>
+</nav>
+
+<main>
+  <!-- CREATE POST -->
+  <div class="create-card">
+    <div class="create-top">
+      <div class="avatar" id="navAvatar">N</div>
+      <button class="create-placeholder" id="openCreateBtn">O que está acontecendo?</button>
+    </div>
+    <div id="createForm">
+      <textarea id="captionInput" placeholder="O que está acontecendo?" rows="3"></textarea>
+      <div id="uploadProgress"><div id="uploadBar"></div></div>
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="drop-zone-icon">🖼️</div>
+        <p><strong>Clique para escolher</strong> ou arraste uma foto aqui</p>
+      </div>
+      <div id="imagePreview">
+        <img id="previewImg" src="" alt="Preview">
+        <button class="remove-img" id="removeImgBtn">✕</button>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-ghost" id="cancelCreateBtn">Cancelar</button>
+        <button class="btn btn-primary" id="submitPostBtn" disabled>Publicar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEED -->
+  <div id="feed">
+    <div class="skeleton-card" id="skeletonCard">
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <div class="skel" style="width:40px;height:40px;border-radius:50%"></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px;justify-content:center">
+          <div class="skel" style="height:12px;width:40%"></div>
+          <div class="skel" style="height:10px;width:25%"></div>
+        </div>
+      </div>
+      <div class="skel" style="height:14px;width:80%;margin-bottom:8px"></div>
+      <div class="skel" style="height:240px;border-radius:10px"></div>
+    </div>
+  </div>
+</main>
+
+
+<!-- NAME MODAL -->
+<div id="nameModal">
+  <div class="modal-box">
+    <h2>👋 Como você se chama?</h2>
+    <p>Você receberá um código único ex: <strong>Maria#4721</strong> para receber mensagens privadas.</p>
+    <input class="modal-input" id="nameInput" placeholder="Seu nome" maxlength="50" autocomplete="off">
+    <button class="modal-btn" id="nameConfirmBtn" disabled>Criar meu perfil</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const REACTIONS = ['❤️','😂','😮','😢','😡','👍']
+
+let visitorId = localStorage.getItem('visitor_id')
+if (!visitorId) { visitorId = crypto.randomUUID(); localStorage.setItem('visitor_id', visitorId) }
+
+function esc(str) { const d = document.createElement('div'); d.textContent = str; return d.innerHTML }
+function toast(msg, ms=2800) {
+  const t = document.getElementById('toast')
+  t.textContent = msg; t.classList.add('show')
+  setTimeout(() => t.classList.remove('show'), ms)
+}
+function timeAgo(iso) {
+  const m = Math.floor((Date.now() - new Date(iso)) / 60000)
+  if (m < 1) return 'agora mesmo'
+  if (m < 60) return `há ${m} min`
+  const h = Math.floor(m/60); if (h < 24) return `há ${h}h`
+  return `há ${Math.floor(h/24)}d`
+}
+async function api(path, opts={}) {
+  const res = await fetch(path, { headers:{'Content-Type':'application/json'}, ...opts })
+  if (!res.ok) throw new Error(res.status)
+  return res.json()
+}
+
+// ── IDENTITY SYSTEM (Nome#Código) ───────────────────────────
+let _identityResolve = null
+let myUserCode = localStorage.getItem('user_code') || null
+
+function getAuthorName() { return localStorage.getItem('author_name') || null }
+function getMyCode()     { return localStorage.getItem('user_code') || null }
+function getDisplayName(name, code) { return code ? `${name}#${code}` : name }
+
+async function requireIdentity() {
+  return new Promise(async resolve => {
+    const name = localStorage.getItem('author_name')
+    const code = localStorage.getItem('user_code')
+    if (name && code) { resolve({ name, code }); return }
+
+    // Has name but no code yet — register
+    if (name && !code) {
+      try {
+        const data = await api('/.netlify/functions/users', {
+          method: 'POST',
+          body: JSON.stringify({ visitor_id: visitorId, author_name: name })
+        })
+        if (data.user) {
+          localStorage.setItem('user_code', data.user.user_code)
+          myUserCode = data.user.user_code
+          updateNavCode(name, data.user.user_code)
+          resolve({ name, code: data.user.user_code }); return
+        }
+      } catch(e) { console.error(e) }
+    }
+
+    _identityResolve = resolve
+    document.getElementById('nameModal').classList.add('open')
+    setTimeout(() => document.getElementById('nameInput').focus(), 50)
+  })
+}
+
+// Alias for backward compat
+function requireName() {
+  return requireIdentity().then(r => r?.name)
+}
+
+async function confirmName() {
+  const n = document.getElementById('nameInput').value.trim().slice(0, 50)
+  if (!n) return
+
+  const btn = document.getElementById('nameConfirmBtn')
+  btn.disabled = true
+  btn.textContent = 'Registrando…'
+
+  try {
+    const data = await api('/.netlify/functions/users', {
+      method: 'POST',
+      body: JSON.stringify({ visitor_id: visitorId, author_name: n })
+    })
+
+    const code = data.user.user_code
+    localStorage.setItem('author_name', n)
+    localStorage.setItem('user_code', code)
+    myUserCode = code
+
+    document.getElementById('navAvatar').textContent = n[0].toUpperCase()
+    updateNavCode(n, code)
+    document.getElementById('nameModal').classList.remove('open')
+    toast(`Bem-vindo, ${n}#${code}! 🎉 Compartilhe seu código com amigos.`, 4000)
+
+    if (_identityResolve) { _identityResolve({ name: n, code }); _identityResolve = null }
+  } catch(e) {
+    toast('Erro ao registrar. Tente novamente.')
+  } finally {
+    btn.disabled = false
+    btn.textContent = 'Entrar'
+  }
+}
+
+function updateNavCode(name, code) {
+  const tag = document.getElementById('myCodeTag')
+  if (!tag) return
+  tag.textContent = `#${code}`
+  tag.style.display = 'inline-block'
+  tag.title = `Seu código é #${code} — clique para copiar`
+  tag.onclick = () => {
+    navigator.clipboard?.writeText(code).then(() => toast(`Código #${code} copiado!`))
+  }
+  document.getElementById('navAvatar').textContent = name[0].toUpperCase()
+}
+
+;(function(){
+  const name = localStorage.getItem('author_name')
+  const code = localStorage.getItem('user_code')
+  if (name) document.getElementById('navAvatar').textContent = name[0].toUpperCase()
+  if (name && code) updateNavCode(name, code)
+
+  const input = document.getElementById('nameInput')
+  const btn   = document.getElementById('nameConfirmBtn')
+  input.addEventListener('input', () => { btn.disabled = input.value.trim().length === 0 })
+  input.addEventListener('keydown', e => { if (e.key === 'Enter' && !btn.disabled) confirmName() })
+  btn.addEventListener('click', confirmName)
+
+  // Try to register if has name but no code
+  if (name && !code) requireIdentity()
+})()
+
+// ── CREATE POST ──────────────────────────────────────────────
+let selectedFile = null
+
+document.getElementById('openCreateBtn').addEventListener('click', async () => {
+  await requireName()
+  document.getElementById('createForm').classList.add('open')
+  document.getElementById('captionInput').focus()
+})
+
+document.getElementById('cancelCreateBtn').addEventListener('click', resetForm)
+
+function resetForm() {
+  document.getElementById('createForm').classList.remove('open')
+  document.getElementById('captionInput').value = ''
+  selectedFile = null
+  document.getElementById('imagePreview').style.display = 'none'
+  document.getElementById('dropZone').style.display = 'block'
+  document.getElementById('fileInput').value = ''
+  document.getElementById('submitPostBtn').disabled = true
+}
+
+function checkReady() {
+  document.getElementById('submitPostBtn').disabled =
+    !(document.getElementById('captionInput').value.trim() || selectedFile)
+}
+
+document.getElementById('captionInput').addEventListener('input', checkReady)
+
+document.getElementById('fileInput').addEventListener('change', () => {
+  const f = document.getElementById('fileInput').files[0]
+  if (f) setPreview(f)
+})
+
+const dz = document.getElementById('dropZone')
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over') })
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'))
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over')
+  const f = e.dataTransfer.files[0]
+  if (f && f.type.startsWith('image/')) setPreview(f)
+})
+
+function setPreview(file) {
+  // Comprime a imagem via canvas antes de guardar
+  const img = new Image()
+  const objectUrl = URL.createObjectURL(file)
+  img.onload = () => {
+    const MAX = 1200
+    let { width, height } = img
+    if (width > MAX || height > MAX) {
+      if (width > height) { height = Math.round(height * MAX / width); width = MAX }
+      else { width = Math.round(width * MAX / height); height = MAX }
+    }
+    const canvas = document.createElement('canvas')
+    canvas.width = width; canvas.height = height
+    canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+    canvas.toBlob(blob => {
+      selectedFile = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' })
+      URL.revokeObjectURL(objectUrl)
+      checkReady()
+    }, 'image/jpeg', 0.82)
+  }
+  img.src = objectUrl
+  document.getElementById('previewImg').src = objectUrl
+  document.getElementById('imagePreview').style.display = 'block'
+  document.getElementById('dropZone').style.display = 'none'
+}
+
+document.getElementById('removeImgBtn').addEventListener('click', () => {
+  selectedFile = null
+  document.getElementById('previewImg').src = ''
+  document.getElementById('imagePreview').style.display = 'none'
+  document.getElementById('dropZone').style.display = 'block'
+  document.getElementById('fileInput').value = ''
+  checkReady()
+})
+
+document.getElementById('submitPostBtn').addEventListener('click', async () => {
+  const caption = document.getElementById('captionInput').value.trim()
+  if (!caption && !selectedFile) return
+  const authorName = getAuthorName()
+  if (!authorName) return
+
+  const btn = document.getElementById('submitPostBtn')
+  btn.disabled = true; btn.textContent = 'Publicando…'
+
+  try {
+    let image_url = null
+    if (selectedFile) {
+      const bar = document.getElementById('uploadBar')
+      const prog = document.getElementById('uploadProgress')
+      prog.classList.add('active'); bar.style.width = '20%'
+
+      // Converte para base64 e envia como JSON
+      const base64 = await new Promise((res, rej) => {
+        const reader = new FileReader()
+        reader.onload = () => res(reader.result.split(',')[1])
+        reader.onerror = rej
+        reader.readAsDataURL(selectedFile)
+      })
+
+      bar.style.width = '50%'
+      const r = await fetch('/.netlify/functions/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file: base64, name: selectedFile.name, type: selectedFile.type })
+      })
+      if (!r.ok) throw new Error('upload')
+      bar.style.width = '85%'
+      image_url = (await r.json()).url
+      bar.style.width = '100%'
+      setTimeout(() => prog.classList.remove('active'), 400)
+    }
+    await api('/.netlify/functions/posts', {
+      method:'POST',
+      body: JSON.stringify({ caption, image_url, visitor_id: visitorId, author_name: authorName, user_code: getMyCode() })
+    })
+    toast('Post publicado! 🎉')
+    resetForm()
+    await loadFeed()
+  } catch(err) {
+    console.error(err); toast('Erro ao publicar. Tente novamente.')
+    btn.disabled = false; btn.textContent = 'Publicar'
+  }
+})
+
+// ── FEED ─────────────────────────────────────────────────────
+async function loadFeed() {
+  const feed = document.getElementById('feed')
+  try {
+    const { posts } = await api(`/.netlify/functions/posts?visitor=${visitorId}`)
+    document.getElementById('skeletonCard')?.remove()
+    if (!posts.length) {
+      feed.innerHTML = `<div class="feed-empty"><div class="icon">📸</div><p>Nenhum post ainda.<br>Seja o primeiro a compartilhar algo!</p></div>`
+      return
+    }
+
+    // Guarda quais seções de comentário estão abertas e o texto digitado
+    const openSections = new Set()
+    const draftTexts = {}
+    document.querySelectorAll('.comments-section').forEach(el => {
+      const pid = el.id.replace('comments-', '')
+      if (el.style.display !== 'none') openSections.add(pid)
+      const input = document.getElementById(`cinput-${pid}`)
+      if (input?.value) draftTexts[pid] = input.value
+    })
+
+    feed.innerHTML = posts.map(renderPost).join('')
+    attachEvents()
+
+    // Restaura seções abertas e textos digitados
+    for (const pid of openSections) {
+      const section = document.getElementById(`comments-${pid}`)
+      if (section) {
+        section.style.display = 'block'
+        await loadComments(pid)
+      }
+    }
+    for (const [pid, text] of Object.entries(draftTexts)) {
+      const input = document.getElementById(`cinput-${pid}`)
+      if (input) {
+        input.value = text
+        document.getElementById(`csend-${pid}`)?.classList.toggle('active', text.length > 0)
+      }
+    }
+
+  } catch(err) {
+    console.error(err)
+    feed.innerHTML = '<div class="feed-empty"><p>Erro ao carregar o feed.</p></div>'
+  }
+}
+
+function renderPost(p) {
+  const reactions = p.reactions || {}
+  const total = Object.values(reactions).reduce((a,b)=>a+b,0)
+  const topEmojis = REACTIONS.filter(e=>reactions[e]>0).slice(0,3).join('')
+  const ur = p.user_reaction || null
+
+  return `
+  <div class="post-card" data-id="${p.id}">
+    <div class="post-header">
+      <div class="avatar">${esc((p.author_name||'A')[0]).toUpperCase()}</div>
+      <div class="post-meta">
+        <div class="post-author">${esc(p.author_name||'Anônimo')}${p.user_code?`<span class="user-code"> #${esc(p.user_code)}</span>`:''}</div>
+        <div class="post-date">${timeAgo(p.created_at)}</div>
+      </div>
+    </div>
+    ${p.caption?`<p class="post-caption">${esc(p.caption)}</p>`:''}
+    ${p.image_url?`<img class="post-image" src="${esc(p.image_url)}" alt="" loading="lazy">`:''}
+    <div class="reactions-bar">
+      <div class="reactions-summary">
+        ${topEmojis?`<span>${topEmojis}</span>`:''}
+        <span>${total||''}</span>
+      </div>
+      <span class="comments-count" data-post="${p.id}">${p.comment_count>0?`${p.comment_count} comentário${p.comment_count>1?'s':''}`:''}
+      </span>
+    </div>
+    <div class="action-bar">
+      <div class="emoji-picker-wrap">
+        <button class="action-btn react-btn${ur?' liked':''}" data-post="${p.id}">
+          <span class="action-icon">${ur||'👍'}</span>${ur&&ur!=='👍'?'Reagiu':'Curtir'}
+        </button>
+        <div class="emoji-picker" id="picker-${p.id}">
+          ${REACTIONS.map(e=>`<button class="emoji-opt" data-post="${p.id}" data-emoji="${e}">${e}</button>`).join('')}
+        </div>
+      </div>
+      <button class="action-btn comment-toggle-btn" data-post="${p.id}">
+        <span class="action-icon">💬</span> Comentar
+      </button>
+    </div>
+    <div class="comments-section" id="comments-${p.id}" style="display:none">
+      <div class="comments-list" id="clist-${p.id}"></div>
+      <div class="comment-input-row">
+        <div class="avatar" style="width:32px;height:32px;font-size:.85rem">${((localStorage.getItem('author_name')||'N')[0]).toUpperCase()}</div>
+        <input class="comment-input" id="cinput-${p.id}" placeholder="Escreva um comentário…" maxlength="500">
+        <button class="send-btn" id="csend-${p.id}" data-post="${p.id}">➤</button>
+      </div>
+    </div>
+  </div>`
+}
+
+function attachEvents() {
+  // React btn — abre picker
+  document.querySelectorAll('.react-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const pid = btn.dataset.post
+      const picker = document.getElementById(`picker-${pid}`)
+      document.querySelectorAll('.emoji-picker.open').forEach(p=>{ if(p!==picker) p.classList.remove('open') })
+      picker.classList.toggle('open')
+      e.stopPropagation()
+    })
+  })
+
+  // Emoji choice
+  document.querySelectorAll('.emoji-opt').forEach(btn => {
+    btn.addEventListener('click', async e => {
+      e.stopPropagation()
+      document.getElementById(`picker-${btn.dataset.post}`)?.classList.remove('open')
+      await sendReaction(btn.dataset.post, btn.dataset.emoji)
+    })
+  })
+
+  // Close pickers on outside click
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.emoji-picker.open').forEach(p=>p.classList.remove('open'))
+  }, { capture: false })
+
+  // Toggle comments
+  document.querySelectorAll('.comment-toggle-btn, .comments-count').forEach(btn => {
+    btn.addEventListener('click', () => toggleComments(btn.dataset.post))
+  })
+
+  // Comment input
+  document.querySelectorAll('.comment-input').forEach(input => {
+    const pid = input.id.replace('cinput-','')
+    const sendBtn = document.getElementById(`csend-${pid}`)
+    input.addEventListener('input', () => sendBtn.classList.toggle('active', input.value.trim().length>0))
+    input.addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendComment(pid) } })
+    sendBtn.addEventListener('click', () => sendComment(pid))
+  })
+}
+
+// ── REACTIONS ────────────────────────────────────────────────
+async function sendReaction(postId, emoji) {
+  try {
+    await api('/.netlify/functions/reactions', {
+      method:'POST',
+      body: JSON.stringify({ post_id:postId, visitor_id:visitorId, emoji })
+    })
+    await refreshPost(postId)
+  } catch { toast('Erro ao reagir.') }
+}
+
+async function refreshPost(postId) {
+  try {
+    const wasOpen = document.getElementById(`comments-${postId}`)?.style.display !== 'none'
+    const { post } = await api(`/.netlify/functions/posts/${postId}?visitor=${visitorId}`)
+    const card = document.querySelector(`.post-card[data-id="${postId}"]`)
+    if (!card) return
+    card.outerHTML = renderPost(post)
+    attachEvents()
+    if (wasOpen) { document.getElementById(`comments-${postId}`).style.display='block'; loadComments(postId) }
+  } catch {}
+}
+
+// ── COMMENTS ─────────────────────────────────────────────────
+async function toggleComments(postId) {
+  const section = document.getElementById(`comments-${postId}`)
+  if (!section) return
+  if (section.style.display === 'none') {
+    section.style.display = 'block'
+    await loadComments(postId)
+    document.getElementById(`cinput-${postId}`)?.focus()
+  } else {
+    section.style.display = 'none'
+  }
+}
+
+async function loadComments(postId) {
+  const list = document.getElementById(`clist-${postId}`)
+  if (!list) return
+  list.innerHTML = '<p style="font-size:.85rem;color:var(--muted);padding:4px 0">Carregando…</p>'
+  try {
+    const { comments } = await api(`/.netlify/functions/comments?post_id=${postId}`)
+    if (!comments.length) { list.innerHTML='<p style="font-size:.85rem;color:var(--muted);padding:4px 0">Seja o primeiro a comentar!</p>'; return }
+    const myCode = localStorage.getItem('user_code') || ''
+    list.innerHTML = comments.map(c=>{
+      const isMe = c.user_code && c.user_code === myCode
+      const nameHtml = !isMe && c.user_code
+        ? `<span class="author-link" data-code="${esc(c.user_code)}" data-name="${esc(c.author_name)}">${esc(c.author_name)}<span class="user-code"> #${esc(c.user_code)}</span></span>`
+        : `<span class="author">${esc(c.author_name)}${c.user_code ? `<span class="user-code"> #${esc(c.user_code)}</span>` : ''}</span>`
+      return `
+      <div class="comment-item">
+        <div class="avatar" style="width:32px;height:32px;font-size:.85rem;flex-shrink:0">${esc((c.author_name||'A')[0]).toUpperCase()}</div>
+        <div>
+          <div class="comment-bubble">
+            ${nameHtml}
+            <p class="text">${esc(c.content)}</p>
+          </div>
+          <div class="comment-time">${timeAgo(c.created_at)}</div>
+        </div>
+      </div>`}).join('')
+
+    // Attach click to open chat by code
+    list.querySelectorAll('.author-link').forEach(el => {
+      el.addEventListener('click', () => openChatByCode(el.dataset.code, el.dataset.name))
+    })
+  } catch { list.innerHTML='<p style="font-size:.85rem;color:var(--muted)">Erro ao carregar.</p>' }
+}
+
+async function sendComment(postId) {
+  const input = document.getElementById(`cinput-${postId}`)
+  const content = input?.value.trim(); if (!content) return
+
+  const authorName = await requireName()
+  if (!authorName) return
+
+  const saved = input.value
+  input.value = ''
+  document.getElementById(`csend-${postId}`)?.classList.remove('active')
+
+  try {
+    const res = await fetch('/.netlify/functions/comments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ post_id: postId, author_name: authorName, content, user_code: getMyCode() })
+    })
+    if (!res.ok) throw new Error(res.status)
+    await loadComments(postId)
+    await refreshPost(postId)
+  } catch {
+    toast('Erro ao enviar comentário.')
+    if (input) input.value = saved
+    document.getElementById(`csend-${postId}`)?.classList.add('active')
+  }
+}
+
+
+// ── CHAT ─────────────────────────────────────────────────────
+let chatPeerCode = null
+let chatPeerName = null
+let chatPollInterval = null
+let unreadCount = 0
+
+function openChatByCode(peerCode, peerName) {
+  const myCode = getMyCode()
+  if (!myCode) { requireIdentity(); return }
+  if (peerCode === myCode) { toast('Não é possível conversar consigo mesmo.'); return }
+
+  chatPeerCode = peerCode
+  chatPeerName = peerName
+
+  const displayName = peerName && !peerName.startsWith('#') ? `${peerName} #${peerCode}` : `#${peerCode}`
+  document.getElementById('chatPeerName').textContent = displayName
+  document.getElementById('chatPeerAvatar').textContent = (peerName||'?')[0].toUpperCase()
+
+  // Garante que o input está habilitado e visível
+  const chatInput = document.getElementById('chatInput')
+  chatInput.disabled = false
+  chatInput.value = ''
+  document.getElementById('chatNewConv').style.display = 'none'
+  document.getElementById('chatSidebar').classList.add('open')
+  document.getElementById('chatOverlay').classList.add('open')
+
+  chatInput.focus()
+
+  loadChatMessages()
+  clearInterval(chatPollInterval)
+  chatPollInterval = setInterval(loadChatMessages, 5000)
+}
+
+// Legacy alias
+function openChat(peerName) { openChatByCode(null, peerName) }
+
+function closeChat() {
+  document.getElementById('chatSidebar').classList.remove('open')
+  document.getElementById('chatOverlay').classList.remove('open')
+  clearInterval(chatPollInterval)
+  chatPeer = null
+}
+
+document.getElementById('chatCloseBtn').addEventListener('click', closeChat)
+document.getElementById('chatOverlay').addEventListener('click', closeChat)
+
+document.getElementById('chatToggleBtn').addEventListener('click', async () => {
+  const identity = await requireIdentity()
+  if (!identity) return
+
+  if (document.getElementById('chatSidebar').classList.contains('open')) {
+    closeChat(); return
+  }
+
+  showConversationsList()
+})
+
+async function showConversationsList() {
+  const myCode = getMyCode()
+  document.getElementById('chatSidebar').classList.add('open')
+  document.getElementById('chatOverlay').classList.add('open')
+  document.getElementById('chatInput').disabled = true
+  document.getElementById('chatPeerName').textContent = 'Conversas'
+  document.getElementById('chatPeerAvatar').textContent = '💬'
+  document.getElementById('chatNewConv').style.display = 'block'
+
+  const box = document.getElementById('chatMessages')
+  box.innerHTML = '<div class="chat-empty"><div class="icon">⏳</div><p>Carregando…</p></div>'
+
+  // Setup code input for new conversation
+  const codeInput = document.getElementById('chatCodeInput')
+  codeInput.value = ''
+  codeInput.oninput = () => {
+    codeInput.value = codeInput.value.replace(/\D/g,'').slice(0,4)
+  }
+  codeInput.onkeydown = async (e) => {
+    if (e.key === 'Enter' && codeInput.value.length === 4) {
+      const code = codeInput.value
+      if (code === myCode) { toast('Esse é o seu próprio código!'); return }
+      // Look up user by code
+      try {
+        const { conversations } = await api(`/.netlify/functions/chat?action=conversations&my_code=${myCode}`)
+        const existing = (conversations||[]).find(c => c.peer_code === code)
+        if (existing) { openChatByCode(existing.peer_code, existing.peer_name || '?'); return }
+        // New chat - just open with code, name will show after first message
+        openChatByCode(code, `#${code}`)
+      } catch { openChatByCode(code, `#${code}`) }
+    }
+  }
+
+  try {
+    const data = await api(`/.netlify/functions/chat?action=conversations&my_code=${myCode}`)
+    const convs = data.conversations || []
+
+    if (!convs.length) {
+      box.innerHTML = `<div class="chat-empty">
+        <div class="icon">💬</div>
+        <p>Nenhuma conversa ainda.<br>Digite o código de alguém acima<br>ou clique no nome nos comentários.</p>
+      </div>`
+      return
+    }
+
+    box.innerHTML = convs.map(c => `
+      <div class="conv-item" data-code="${esc(c.peer_code)}" data-name="${esc(c.peer_name||'?')}">
+        <div class="avatar" style="flex-shrink:0">${esc((c.peer_name||'?')[0]).toUpperCase()}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.92rem">${esc(c.peer_name||'?')} <span class="user-code">#${esc(c.peer_code)}</span></div>
+          <div style="font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.last_message)}</div>
+        </div>
+        ${c.unread > 0 ? `<span class="conv-unread">${c.unread}</span>` : ''}
+      </div>
+    `).join('')
+
+    box.querySelectorAll('.conv-item').forEach(el => {
+      el.addEventListener('click', () => openChatByCode(el.dataset.code, el.dataset.name))
+    })
+  } catch(e) {
+    box.innerHTML = '<div class="chat-empty"><p>Erro ao carregar conversas.</p></div>'
+  }
+}
+
+async function loadChatMessages() {
+  const myCode = getMyCode()
+  if (!chatPeerCode || !myCode) return
+
+  try {
+    const data = await api(`/.netlify/functions/chat?my_code=${myCode}&peer_code=${chatPeerCode}`)
+    const msgs = data.messages || []
+    const box = document.getElementById('chatMessages')
+
+    if (!msgs.length) {
+      box.innerHTML = `<div class="chat-empty"><div class="icon">👋</div><p>Início da conversa com<br><strong>${esc(chatPeerName)} #${esc(chatPeerCode)}</strong></p></div>`
+      return
+    }
+
+    const atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60
+    box.innerHTML = msgs.map(m => {
+      const mine = m.sender_code === myCode
+      return `<div class="chat-bubble-wrap ${mine ? 'mine' : 'theirs'}">
+        ${!mine ? `<span class="bubble-sender">${esc(m.sender_name)} <span class="user-code">#${esc(m.sender_code)}</span></span>` : ''}
+        <div class="chat-bubble">${esc(m.content)}</div>
+        <span class="bubble-time">${timeAgo(m.created_at)}</span>
+      </div>`
+    }).join('')
+
+    if (atBottom) box.scrollTop = box.scrollHeight
+  } catch(e) { console.error('chat load error', e) }
+}
+
+async function sendChatMessage() {
+  const myCode = getMyCode()
+  const myName = getAuthorName()
+  const input = document.getElementById('chatInput')
+  if (!input) return
+  // Garante que o input está habilitado antes de enviar
+  input.disabled = false
+  const content = input.value.trim()
+  if (!content || !chatPeerCode || !myCode) return
+
+  const saved = content
+  input.value = ''
+  document.getElementById('chatSendBtn').classList.remove('active')
+
+  try {
+    await fetch('/.netlify/functions/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sender_code: myCode, sender_name: myName, receiver_code: chatPeerCode, content: saved })
+    }).then(async r => {
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({}))
+        throw new Error(err.error || `HTTP ${r.status}`)
+      }
+      return r.json()
+    })
+    await loadChatMessages()
+    document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight
+  } catch(e) {
+    console.error('sendChatMessage error:', e)
+    toast(`Erro ao enviar: ${e.message}`)
+    input.value = saved
+    document.getElementById('chatSendBtn').classList.add('active')
+  }
+}
+
+// Poll for unread messages
+async function checkUnread() {
+  const myCode = getMyCode()
+  if (!myCode) return
+  const myName = getAuthorName()
+  if (!myName) return
+  try {
+    const data = await api(`/.netlify/functions/chat?action=unread&my_code=${myCode}`)
+    unreadCount = data.count || 0
+    const badge = document.getElementById('chatBadge')
+    if (unreadCount > 0) {
+      badge.textContent = unreadCount
+      badge.classList.add('show')
+    } else {
+      badge.classList.remove('show')
+    }
+  } catch {}
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+// Garante que o DOM está pronto antes de registrar eventos do chat
+// Eventos do chat registrados diretamente no document (evita problema de timing DOM)
+document.addEventListener('input', e => {
+  if (e.target.id === 'chatInput') {
+    const btn = document.getElementById('chatSendBtn')
+    if (btn) btn.classList.toggle('active', e.target.value.trim().length > 0)
+  }
+})
+
+document.addEventListener('keydown', e => {
+  if (e.target.id === 'chatInput' && e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault()
+    sendChatMessage()
+  }
+})
+
+document.addEventListener('click', e => {
+  if (e.target.id === 'chatSendBtn' || e.target.closest('#chatSendBtn')) {
+    sendChatMessage()
+  }
+})
+
+// Carrega feed imediatamente
+loadFeed()
+
+// Polling inteligente do feed: só recarrega se nenhum input estiver ativo
+setInterval(() => {
+  const anyFocused = document.querySelector('.comment-input:focus, #captionInput:focus, #nameInput:focus, #chatInput:focus')
+  if (!anyFocused) loadFeed()
+}, 20000)
+
+// Polling de não lidas: inicia 3s após o feed carregar para não competir
+setTimeout(() => {
+  checkUnread()
+  setInterval(checkUnread, 10000)
+}, 3000)
+</script>
+
+</body>
+</html>
