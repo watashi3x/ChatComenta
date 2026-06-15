@@ -24,12 +24,14 @@ exports.handler = async (event) => {
       if (action === 'conversations') {
         if (!my_code) return { statusCode: 400, headers, body: JSON.stringify({ error: 'my_code obrigatório' }) }
 
-        const { data: messages } = await supabase
+        const { data: messages, error: msgErr } = await supabase
           .from('chat_messages')
           .select('sender_code, receiver_code, sender_name, content, created_at, read')
-          .or(`sender_code.eq.${my_code},receiver_code.eq.${my_code}`)
+          .or(`sender_code.eq."${my_code}",receiver_code.eq."${my_code}"`)
           .order('created_at', { ascending: false })
           .limit(200)
+
+        if (msgErr) throw msgErr
 
         // Agrupa por peer
         const peersMap = {}
@@ -69,7 +71,7 @@ exports.handler = async (event) => {
         const { count } = await supabase
           .from('chat_messages')
           .select('*', { count: 'exact', head: true })
-          .eq('receiver_code', my_code)
+          .eq('receiver_code', String(my_code))
           .eq('read', false)
 
         return { statusCode: 200, headers, body: JSON.stringify({ count: count || 0 }) }
@@ -77,12 +79,14 @@ exports.handler = async (event) => {
 
       // ── GET ?my_code=A&peer_code=B — conversa entre dois ──
       if (my_code && peer_code) {
-        const { data: messages } = await supabase
+        const { data: messages, error: convErr } = await supabase
           .from('chat_messages')
           .select('id, sender_code, sender_name, receiver_code, content, created_at, read')
-          .or(`and(sender_code.eq.${my_code},receiver_code.eq.${peer_code}),and(sender_code.eq.${peer_code},receiver_code.eq.${my_code})`)
+          .or(`and(sender_code.eq."${my_code}",receiver_code.eq."${peer_code}"),and(sender_code.eq."${peer_code}",receiver_code.eq."${my_code}")`)
           .order('created_at', { ascending: true })
           .limit(100)
+
+        if (convErr) throw convErr
 
         // Marca como lidas
         const unreadIds = (messages || []).filter(m => m.receiver_code === my_code && !m.read).map(m => m.id)
